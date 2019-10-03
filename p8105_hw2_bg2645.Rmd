@@ -20,6 +20,7 @@ trashwheel_data =
   drop_na(dumpster) %>%
   select(-15,-16,-17) %>%
   mutate(sports_balls = as.integer (sports_balls))
+trashwheel_data
 ```
 * Read and clean precipitation data for 2017 
 ```{r}
@@ -44,4 +45,50 @@ precip_data =
   mutate(month = as.numeric(month), month = month.name[month])
 precip_data
 ```
+
+## Question 2
+* clean the data in pols-month.csv 
+```{r}
+pols_month = 
+  read_csv("./Data/pols-month.csv") %>% 
+  janitor::clean_names() %>% 
+  separate(mon, into= c("year", "month", "day")) %>% 
+  mutate(month = as.numeric(month), month = month.name[month]) %>% 
+  mutate(president = prez_gop + prez_dem) %>% 
+  select(-prez_gop,-prez_dem,-day) 
+pols_month
+```
+*clean data in snp.csv
+```{r}
+snp_data = 
+  read_csv("./Data/snp.csv") %>% 
+  janitor::clean_names() %>% 
+  separate(date, into= c("day", "month", "year")) %>% 
+  select(year, month, everything(), -day) %>% 
+  mutate(month = as.numeric(month), month = month.name[month])
+snp_data
+```
+* tidy the unemployment data so that it can be merged with the previous datasets
+
+```{r}
+unemployment_data = 
+  read_csv("./Data/unemployment.csv") %>%
+  pivot_longer((Jan:Dec),
+    names_to = "month", 
+    values_to = "percent") %>% 
+janitor::clean_names() 
+unemployment_data
+```
+
+* merge snp into pols 
+```{r}
+snp_pols = 
+  left_join(snp_data, pols_month) 
+snp_pols
+
+unempoly_snp_pols = 
+  left_join(snp_pols, pols_month) 
+unempoly_snp_pols
+```
+
 
