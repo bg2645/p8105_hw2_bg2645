@@ -20,7 +20,6 @@ trashwheel_data =
   drop_na(dumpster) %>%
   select(-15,-16,-17) %>%
   mutate(sports_balls = as.integer (sports_balls))
-trashwheel_data
 ```
 * Read and clean precipitation data for 2017 
 ```{r}
@@ -28,7 +27,6 @@ trashwheel_data2 =
   read_excel("./Data/trash_wheel.xlsx", sheet = 6, range = "A2:B14") %>%
   janitor::clean_names() %>%
   mutate(year = 2017) 
-trashwheel_data2
 ```
 * Read and clean precipitation data for 2017 
 ```{r}
@@ -36,14 +34,12 @@ trashwheel_data3 =
   read_excel("./Data/trash_wheel.xlsx", sheet = 5, range = "A2:B14") %>%
   janitor::clean_names() %>%
   mutate(year = 2018)
-trashwheel_data3
 ```
 *combine precipitation datasets
 ```{r}
 precip_data = 
   full_join(trashwheel_data2, trashwheel_data3) %>%
   mutate(month = as.numeric(month), month = month.name[month])
-precip_data
 ```
 
 ## Question 2
@@ -53,10 +49,8 @@ pols_month =
   read_csv("./Data/pols-month.csv") %>% 
   janitor::clean_names() %>% 
   separate(mon, into= c("year", "month", "day")) %>% 
-  mutate(month = as.numeric(month), month = month.name[month]) %>% 
-  mutate(president = prez_gop + prez_dem) %>% 
+  mutate(month = as.numeric(month), month = month.abb[month],year= as.numeric(year), president = ifelse(prez_gop, "gop", "dem")) %>% 
   select(-prez_gop,-prez_dem,-day) 
-pols_month
 ```
 *clean data in snp.csv
 ```{r}
@@ -65,8 +59,7 @@ snp_data =
   janitor::clean_names() %>% 
   separate(date, into= c("day", "month", "year")) %>% 
   select(year, month, everything(), -day) %>% 
-  mutate(month = as.numeric(month), month = month.name[month])
-snp_data
+  mutate(month = as.numeric(month), month = month.abb[month], year= as.numeric(year))
 ```
 * tidy the unemployment data so that it can be merged with the previous datasets
 
@@ -77,18 +70,49 @@ unemployment_data =
     names_to = "month", 
     values_to = "percent") %>% 
 janitor::clean_names() 
-unemployment_data
 ```
 
 * merge snp into pols 
 ```{r}
 snp_pols = 
-  left_join(snp_data, pols_month) 
-snp_pols
+  left_join(pols_month, snp_data, by = c("year", "month")) 
+
 
 unempoly_snp_pols = 
-  left_join(snp_pols, pols_month) 
-unempoly_snp_pols
+  left_join(snp_pols, unemployment_data, by = c("year", "month")) 
+
+```
+
+## Question 3 
+* Load and tidy data from NYC Open data on the popularity of baby names
+
+```{r}
+babyname_data = 
+  read_csv("./Data/Popular_Baby_Names.csv")%>%
+  janitor::clean_names() %>%
+  distinct()  %>%
+  mutate(ethnicity = recode(ethnicity, "ASIAN AND PACI" = "ASIAN AND PACIFIC ISLANDER", "BLACK NON HISP" = "BLACK NON HISPANIC",  "WHITE NON HISP" = "WHITE NON HISPANIC"), ethnicity = str_to_lower(ethnicity), gender = str_to_lower(gender), childs_first_name=str_to_lower(childs_first_name))
+babyname_data
+```
+
+```{r} 
+babyname_data %>%
+  filter(childs_first_name == "olivia") %>%
+  select(-count) %>%
+  pivot_wider(names_from = "year_of_birth", values_from = "rank") %>%
+  knitr::kable()
+```
+
+```{r} 
+babyname_data %>%
+  filter(gender == "male") %>%
+  select(-count) %>%
+  pivot_wider(names_from = "year_of_birth", values_from = "rank") %>%
+  knitr::kable()
+```
+
+```{r}
+  ggplot(babyname_data, aes(x = rank, y = count, filter(gender == "male", ethnicity == "white non hispanic", year_of_birth == "2016"))) +  geom_point()
 ```
 
 
