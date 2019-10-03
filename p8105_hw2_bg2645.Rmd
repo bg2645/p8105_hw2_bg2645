@@ -20,6 +20,7 @@ trashwheel_data =
   drop_na(dumpster) %>%
   select(-15,-16,-17) %>%
   mutate(sports_balls = as.integer (sports_balls))
+trashwheel_data
 ```
 * Read and clean precipitation data for 2017 
 ```{r}
@@ -28,19 +29,29 @@ trashwheel_data2 =
   janitor::clean_names() %>%
   mutate(year = 2017) 
 ```
-* Read and clean precipitation data for 2017 
+* Read and clean precipitation data for 2018
 ```{r}
 trashwheel_data3 = 
   read_excel("./Data/trash_wheel.xlsx", sheet = 5, range = "A2:B14") %>%
   janitor::clean_names() %>%
   mutate(year = 2018)
+trashwheel_data3
 ```
 *combine precipitation datasets
 ```{r}
 precip_data = 
   full_join(trashwheel_data2, trashwheel_data3) %>%
-  mutate(month = as.numeric(month), month = month.name[month])
+  mutate
+precip_data
 ```
+
+There were `r nrow(trashwheel_data)` observations and `r ncol(trashwheel_data)` variables in the `trashwheel` dataset. The key variables in this dataset are the types of litter that is collected by mr. trash wheel nd the amount of such litter. 
+
+There were `r nrow(precip_data)` obesrvations and `r ncol(precip_data)` variables in `precip_data` dataset. The key variables in this dataset was the amount percipitation in inches across all months for the years of 2017 and 2018. 
+
+The total precipitation in 2018 is `r sum(pull(trashwheel_data3, total))`. 
+The median number of sports balls in a dumpster in 2017 is `r median(pull(filter(trashwheel_data, year == 2017), sports_balls))`
+
 
 ## Question 2
 * clean the data in pols-month.csv 
@@ -51,15 +62,19 @@ pols_month =
   separate(mon, into= c("year", "month", "day")) %>% 
   mutate(month = as.numeric(month), month = month.abb[month],year= as.numeric(year), president = ifelse(prez_gop, "gop", "dem")) %>% 
   select(-prez_gop,-prez_dem,-day) 
+pols_month
 ```
 *clean data in snp.csv
 ```{r}
 snp_data = 
   read_csv("./Data/snp.csv") %>% 
   janitor::clean_names() %>% 
-  separate(date, into= c("day", "month", "year")) %>% 
-  select(year, month, everything(), -day) %>% 
-  mutate(month = as.numeric(month), month = month.abb[month], year= as.numeric(year))
+  separate(date, c("month", "day", "year")) %>% 
+  mutate(year = as.numeric(year), month = as.numeric(month), month=month.abb[month]) %>% 
+  select(year, month, -day, close) %>%
+  arrange (year, month)
+snp_data
+
 ```
 * tidy the unemployment data so that it can be merged with the previous datasets
 
@@ -70,18 +85,31 @@ unemployment_data =
     names_to = "month", 
     values_to = "percent") %>% 
 janitor::clean_names() 
+unemployment_data
 ```
 
 * merge snp into pols 
 ```{r}
 snp_pols = 
-  left_join(pols_month, snp_data, by = c("year", "month")) 
-
+  left_join(pols_month, snp_data) 
 
 unempoly_snp_pols = 
-  left_join(snp_pols, unemployment_data, by = c("year", "month")) 
-
+  left_join(snp_pols, unemployment_data) 
+unempoly_snp_pols
 ```
+Write a short paragraph about these datasets. Explain briefly what each dataset contained, and describe the resulting dataset (e.g. give the dimension, range of years, and names of key variables
+
+There were `r nrow(pols_month)` observations and `r ncol(pols_month)` variables in the `pols_month` dataset. The years ranged from `r min(pull(pols_month, year))` to `r max(pull(pols_month, year))`. The key variables for this dataset were whether president was democrat or republican, the number of governors, senators, and representative and their political afflilation (democrat and republican) across different months and years.
+
+There were `r nrow(snp_data)` obesrvations and `r ncol(snp_data)` variables in `snp_data` dataset. The years ranged from `r min(pull(snp_data, year))` to `r max(pull(snp_data, year))`. The key variables for this dataset was the closing values of the S&P stock index across different months and years. 
+
+There were `r nrow(unemployment_data)` observations and `r ncol(unemployment_data)` variables in the `unemployment_data` dataset. The years ranged from from `r min(pull(unemployment_data, year))` to `r max(pull(unemployment_data, year))`. The key variables for this dataset was the percentage of unemployment across different months and years. 
+
+There were `r nrow(unempoly_snp_pols)` observations and `r ncol(unempoly_snp_pols)` variables in the merged `unemploy_snp_pols` dataset. The years ranged from `r min(pull(unempoly_snp_pols, year))` to `r max(pull(unempoly_snp_pols, year))`. The 
+key variables for this dataset were all the aforementioned key variables in the previous datasets above, as they were all  combined into one dataset. 
+
+
+
 
 ## Question 3 
 * Load and tidy data from NYC Open data on the popularity of baby names
@@ -94,7 +122,7 @@ babyname_data =
   mutate(ethnicity = recode(ethnicity, "ASIAN AND PACI" = "ASIAN AND PACIFIC ISLANDER", "BLACK NON HISP" = "BLACK NON HISPANIC",  "WHITE NON HISP" = "WHITE NON HISPANIC"), ethnicity = str_to_lower(ethnicity), gender = str_to_lower(gender), childs_first_name=str_to_lower(childs_first_name))
 babyname_data
 ```
-
+* Create table showing the rank in popularity of the name “Olivia” as a female baby name over time
 ```{r} 
 babyname_data %>%
   filter(childs_first_name == "olivia") %>%
@@ -102,17 +130,19 @@ babyname_data %>%
   pivot_wider(names_from = "year_of_birth", values_from = "rank") %>%
   knitr::kable()
 ```
-
+*table showing the most popular name among male children over time
 ```{r} 
 babyname_data %>%
-  filter(gender == "male") %>%
+  filter(gender == "male", rank ==1) %>%
   select(-count) %>%
-  pivot_wider(names_from = "year_of_birth", values_from = "rank") %>%
+  pivot_wider(names_from = "year_of_birth", values_from = "childs_first_name") %>%
   knitr::kable()
 ```
-
+*produce a scatter plot showing the number of children with a name (y axis) against the rank in popularity of that name (x axis), for male, white non-hispanic children born in 2016
 ```{r}
-  ggplot(babyname_data, aes(x = rank, y = count, filter(gender == "male", ethnicity == "white non hispanic", year_of_birth == "2016"))) +  geom_point()
+scatter_plot= babyname_data %>%
+  filter(gender == "male", ethnicity == "white non hispanic", year_of_birth == "2016") 
+  ggplot(scatter_plot, aes(x = rank, y = count )) +  geom_point()
 ```
 
 
