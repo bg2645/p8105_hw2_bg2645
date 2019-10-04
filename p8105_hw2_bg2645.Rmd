@@ -45,7 +45,7 @@ precip_data =
 precip_data
 ```
 
-There were `r nrow(trashwheel_data)` observations and `r ncol(trashwheel_data)` variables in the `trashwheel` dataset. The key variables in this dataset are the types of litter that is collected by mr. trash wheel nd the amount of such litter. 
+There were `r nrow(trashwheel_data)` observations and `r ncol(trashwheel_data)` variables in the `trashwheel_data` dataset. The key variables in this dataset are the types of litter that is collected by mr. trash wheel, such as glass bottles and cigarette butts, the amount of such litter, and the number of homes powered by incinerating the litter. 
 
 There were `r nrow(precip_data)` obesrvations and `r ncol(precip_data)` variables in `precip_data` dataset. The key variables in this dataset was the amount percipitation in inches across all months for the years of 2017 and 2018. 
 
@@ -97,7 +97,7 @@ unempoly_snp_pols =
   left_join(snp_pols, unemployment_data) 
 unempoly_snp_pols
 ```
-Write a short paragraph about these datasets. Explain briefly what each dataset contained, and describe the resulting dataset (e.g. give the dimension, range of years, and names of key variables
+
 
 There were `r nrow(pols_month)` observations and `r ncol(pols_month)` variables in the `pols_month` dataset. The years ranged from `r min(pull(pols_month, year))` to `r max(pull(pols_month, year))`. The key variables for this dataset were whether president was democrat or republican, the number of governors, senators, and representative and their political afflilation (democrat and republican) across different months and years.
 
@@ -122,7 +122,9 @@ babyname_data =
   mutate(ethnicity = recode(ethnicity, "ASIAN AND PACI" = "ASIAN AND PACIFIC ISLANDER", "BLACK NON HISP" = "BLACK NON HISPANIC",  "WHITE NON HISP" = "WHITE NON HISPANIC"), ethnicity = str_to_lower(ethnicity), gender = str_to_lower(gender), childs_first_name=str_to_lower(childs_first_name))
 babyname_data
 ```
+
 * Create table showing the rank in popularity of the name “Olivia” as a female baby name over time
+
 ```{r} 
 babyname_data %>%
   filter(childs_first_name == "olivia") %>%
@@ -130,7 +132,9 @@ babyname_data %>%
   pivot_wider(names_from = "year_of_birth", values_from = "rank") %>%
   knitr::kable()
 ```
-*table showing the most popular name among male children over time
+
+* table showing the most popular name among male children over time
+
 ```{r} 
 babyname_data %>%
   filter(gender == "male", rank ==1) %>%
@@ -138,7 +142,9 @@ babyname_data %>%
   pivot_wider(names_from = "year_of_birth", values_from = "childs_first_name") %>%
   knitr::kable()
 ```
-*produce a scatter plot showing the number of children with a name (y axis) against the rank in popularity of that name (x axis), for male, white non-hispanic children born in 2016
+
+
+* produce a scatter plot showing the number of children with a name (y axis) against the rank in popularity of that name (x axis), for male, white non-hispanic children born in 2016
 ```{r}
 scatter_plot= babyname_data %>%
   filter(gender == "male", ethnicity == "white non hispanic", year_of_birth == "2016") 
